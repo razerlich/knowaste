@@ -12,49 +12,143 @@ export const ItemsProvider = ({ children }) => {
     const [loadingItems, setLoadingItems] = useState(true);
     const [userItems, setUserItems] = useState();
     const [categories, setCategories] = useState();
-    const [ingredients, setIngredients] = useState(
-        [
-            {id:'a1',name: "Yellow Cheddar", quantity: 1, unitType: "kg"},
-            {id:'a2',name: "Mozzarella", quantity: 3, unitType: "kg"},
-            {id:'a3',name: "Medjool Dates", quantity: 0.2, unitType: "kg"},
-            {id:'a4',name: "Pink Lady Apples", quantity: 2, unitType: "kg"},
-            {id:'a5',name: "Cavendish Bananas", quantity: 1, unitType: "kg"},
-            {id:'a6',name: "Medjool Dates", quantity: 2, unitType: "kg"},
-        ]
-    );
+    const [allProducts, setAllProducts] = useState([]);
+    const [ingredients, setIngredients] = useState([]);
 
+    // Function to extract all products with their categories using flatMap
+    const extractAllProducts = (menuData) => {
+        return menuData.categories.flatMap(category => {
+            const directItems = category.items  // Changed from category.item()
+                ? [{
+                    categoryName: category.name,
+                    categoryId: category.id,
+                    subCategoryName: null,
+                    items: category.items
+                }]
+                : []
+            const subCategoriesItems = category.subCategories
+                ? category.subCategories.map(subCategory => ({
+                    categoryName: category.name,
+                    categoryId: category.id,
+                    subCategoryName: subCategory.name,
+                    subCategoryId: subCategory.id,
+                    items: subCategory.items
+                }))
+                : []
+            return [...directItems, ...subCategoriesItems]
+        })
+    }
+
+    // Function to extract all unique ingredients with base quantities using flatMap
+    const extractIngredients = (menuData) => {
+        const allIngredients = menuData.categories.flatMap(category => {
+            const categoryIngredients = category.items
+                ? category.items.flatMap(item => item.ingredients)
+                : []
+
+            const subCategoryIngredients = category.subCategories
+                ? category.subCategories.flatMap(subCategory =>
+                    subCategory.items.flatMap(item => item.ingredients)
+                )
+                : []
+            return [...categoryIngredients, ...subCategoryIngredients]
+        })
+
+        // Reduce ingredients to combine quantities
+        return Object.values(allIngredients.reduce((acc, ingredient) => {
+            const baseQuantity = ingredient.amountInGrams * 1.2
+
+            if (acc[ingredient.ingredientId]) {
+                acc[ingredient.ingredientId].baseQuantity += baseQuantity
+            } else {
+                acc[ingredient.ingredientId] = {
+                    id: ingredient.ingredientId,
+                    name: ingredient.name,
+                    baseQuantity,
+                    stockQuantity: 0,
+                    uniteType: 'grams'
+                }
+            }
+            return acc
+        }, {}))
+    }
 
     useEffect(() => {
         setLoadingItems(true);
-        setUserItems(
-            user?.accountType === 'supplier'
-                ? SupplierProducts
-                : MenuItems
-        );
-        setCategories(
-            user?.accountType === 'supplier'
-                ? SupplierProducts
-                : MenuItems.categories
-                    .map(category => ({
-                        name: category.name,
-                        subCategories: category.subCategories?.map(sub => sub.name) || []
+        // setUserItems(
+        //     user?.accountType === 'supplier'
+        //         ? SupplierProducts
+        //         : MenuItems
+        // );
+        // setCategories(
+        //     user?.accountType === 'supplier'
+        //         ? SupplierProducts
+        //         : MenuItems.categories
+        //             .map(category => ({
+        //                 name: category.name,
+        //                 subCategories: category.subCategories?.map(sub => sub.name) || []
+        //
+        //             }) || [])
+        //
+        // );
+        //
+        // console.log('User Items Set');
+        // console.log('user items', userItems)
+        // console.log('user categories',categories)
 
-                    }) || [])
+        const currentUserItems = user?.accountType === 'supplier'
+            ? SupplierProducts
+            : MenuItems
+        setUserItems(currentUserItems)
 
-        );
+        if (user?.accountType !== 'supplier') {
+            // Set categories
+            const extractedCategories  = MenuItems.categories.map(category => ({
+                name: category.name,
+                subCategories: category.subCategories?.map(sub => sub.name) || []
+            }))
+            setCategories(extractedCategories)
 
-        console.log('User Items Set');
-        console.log('user items', userItems)
-        console.log('user categories',categories)
+            // Extract all products with categories
+            const extractedProducts = extractAllProducts(MenuItems)
+            setAllProducts(extractedProducts)
+
+            // Extract and set ingredients
+            const extractedIngredients = extractIngredients(MenuItems)
+            setIngredients(extractedIngredients)
+        } else {
+            setCategories(SupplierProducts)
+        }
+
         setLoadingItems(false);
+
         return () => {
             setUserItems(null);
             setCategories(null);
+            setAllProducts([]);
+            setIngredients([]);
         };
     }, [user]);
 
+    // Function to filter products by category and subcategory
+    const filterProducts = (categoryId, subCategoryId = null) => {
+        return allProducts.filter(product =>
+        product.categoryId === categoryId &&
+            (!subCategoryId || product.subCategoryId === subCategoryId)
+        )
+    }
+
+    // Function to update ingredient stock
+    const updateIngredientStock = (ingredientId, newQunatity) => {
+        setIngredients(prevIngredients => prevIngredients.map(ingredient =>
+            ingredient.id === ingredientId
+                ? { ...ingredient, stockQuantity: newQunatity }
+                : ingredient
+        ))
+    }
+
     return (
-        <ItemsContext.Provider value={{ userItems, categories ,ingredients, setIngredients,loadingItems}}>
+        <ItemsContext.Provider value={{userItems, categories, ingredients, allProducts, loadingItems, filterProducts, updateIngredientStock, setIngredients}}>
             {children}
         </ItemsContext.Provider>
     );
