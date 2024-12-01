@@ -3,19 +3,13 @@ import MenuItem from "./MenuItem";
 import {useUserItems} from "../../../../../Hooks/User/useUserItems";
 
 
-const Menu = ({ userItems = [],categories=[] ,}) => {
-    const {handleUpdate, handleRemove} = useUserItems();
+const Menu = () => {
+    const {handleUpdate, handleRemove,categories,allProducts} = useUserItems();
     const [selectedCategory, setSelectedCategory] = useState(categories[0]?.name || '');
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
 
-    const subCategory = categories.find(category => category.name === selectedCategory)?.subCategories || [];
-    const categoryItems = userItems.find(category => category.name === selectedCategory)?.dishes || [];
-    const filteredItems = selectedSubCategory
-        ? categoryItems.find(subCategory => subCategory.subCategoryName === selectedSubCategory)?.items || []
-        : categoryItems;
-
     useEffect(() => {
-        setSelectedSubCategory(subCategory?.[0] || null);
+        setSelectedSubCategory(categories.subCategoryName?.[0] || null);
     }, [selectedCategory]);
 
 
@@ -40,8 +34,8 @@ const Menu = ({ userItems = [],categories=[] ,}) => {
             </div>
             <div className={`w-full flex flex-col bg-white p-5 rounded-sm`}>
                 <div
-                    className={`mb-6 w-full lg:w-fit self-center rounded-t-sm grid grid-cols-3 md:grid-cols-${subCategory.length} gap-2 p-2`}>
-                    {subCategory?.map(subCategory => (
+                    className={`mb-6 w-full lg:w-fit self-center rounded-t-sm grid grid-cols-3 md:grid-cols-5 gap-2 p-2`}>
+                    {categories.subCategoryName?.map(subCategory => (
                         <button
                             key={subCategory.id}
                             className={`p-3 rounded-t-sm text-buttons text-light
@@ -52,16 +46,16 @@ const Menu = ({ userItems = [],categories=[] ,}) => {
                         </button>
                     ))}
                 </div>
-                <div className="w-full gap-3 grid grid-cols-1 md:grid-cols-2">
-                    {filteredItems?.map((item) => (
-                        <MenuItem
-                            key={item.id}
-                            item={item}
-                            onUpdate={handleUpdate}
-                            onRemove={handleRemove}
-                        />
-                    ))}
-                </div>
+                {/*<div className="w-full gap-3 grid grid-cols-1 md:grid-cols-2">*/}
+                {/*    {filteredItems?.map((item) => (*/}
+                {/*        <MenuItem*/}
+                {/*            key={item.id}*/}
+                {/*            item={item}*/}
+                {/*            onUpdate={handleUpdate}*/}
+                {/*            onRemove={handleRemove}*/}
+                {/*        />*/}
+                {/*    ))}*/}
+                {/*</div>*/}
             </div>
         </div>
     );

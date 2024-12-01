@@ -58,11 +58,11 @@ export const ItemsProvider = ({ children }) => {
         return Object.values(allIngredients.reduce((acc, ingredient) => {
             const baseQuantity = ingredient.amountInGrams * 1.2
 
-            if (acc[ingredient.ingredientId]) {
-                acc[ingredient.ingredientId].baseQuantity += baseQuantity
+            if (acc[ingredient.id]) {
+                acc[ingredient.id].baseQuantity += baseQuantity
             } else {
-                acc[ingredient.ingredientId] = {
-                    id: ingredient.ingredientId,
+                acc[ingredient.id] = {
+                    id: ingredient.id,
                     name: ingredient.name,
                     baseQuantity,
                     stockQuantity: 0,
@@ -104,6 +104,7 @@ export const ItemsProvider = ({ children }) => {
         if (user?.accountType !== 'supplier') {
             // Set categories
             const extractedCategories  = MenuItems.categories.map(category => ({
+                id: category.id,
                 name: category.name,
                 subCategories: category.subCategories?.map(sub => sub.name) || []
             }))
@@ -121,7 +122,9 @@ export const ItemsProvider = ({ children }) => {
         }
 
         setLoadingItems(false);
-
+        console.log('ingredients:', ingredients)
+        console.log('all products:', allProducts)
+        console.log('categories:', categories)
         return () => {
             setUserItems(null);
             setCategories(null);
@@ -139,10 +142,10 @@ export const ItemsProvider = ({ children }) => {
     }
 
     // Function to update ingredient stock
-    const updateIngredientStock = (ingredientId, newQunatity) => {
+    const updateIngredientStock = (ingredientId, newQuantity) => {
         setIngredients(prevIngredients => prevIngredients.map(ingredient =>
             ingredient.id === ingredientId
-                ? { ...ingredient, stockQuantity: newQunatity }
+                ? { ...ingredient, stockQuantity: newQuantity }
                 : ingredient
         ))
     }

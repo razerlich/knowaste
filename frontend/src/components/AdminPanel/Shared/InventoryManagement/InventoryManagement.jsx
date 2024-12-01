@@ -13,7 +13,7 @@ import TabNavigation from "../../../Common/TabNavigation/TabNavigation";
 const TABS = ['Menu', 'Inventory'];
 
 const InventoryManagement = () => {
-    const { userItems, categories, products, setProducts } = useItemsContext();
+    const { userItems, categories, products, setProducts ,allProducts} = useItemsContext();
     const { userBaseData: user } = useUserContext();
     const [isAdding, setIsAdding] = useState(false);
     const [currentTab, setCurrentTab] = useState(TABS[0]);
@@ -52,7 +52,7 @@ const InventoryManagement = () => {
                         categories={categories}
                     />
                 )}
-                {userItems?.length > 0 ? (
+                {allProducts?.length > 0 ? (
                     <Menu
                         userItems={userItems}
                         categories={categories}
